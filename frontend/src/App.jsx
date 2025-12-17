@@ -9,7 +9,7 @@ function App() {
   const [title, setTitle] = useState("");
   const [tasks, setTasks] = useState([]);
   const [expandedTaskId, setExpandedTaskId] = useState(null);
-  const [deletingTaskId, setDeletingTaskId] = useState(null);
+  const [deletingTaskId, setDeletingTaskId] = useState(() => new Set());
 
   useEffect(() => {
     fetchTasks();
@@ -61,59 +61,47 @@ function App() {
   // };
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
-  if (!title.trim()) return;
+    e.preventDefault();
+    if (!title.trim()) return;
 
-  const addPromise = fetch(API_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ title }),
-  });
+    const addPromise = fetch(API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title }),
+    });
 
-  toast.promise(addPromise, {
-    loading: "Adding task...",
-    success: "Task added successfully",
-    error: "Failed to add task",
-  });
+    toast.promise(addPromise, {
+      loading: "Adding task...",
+      success: "Task added successfully",
+      error: "Failed to add task",
+    });
 
-  try {
-    await addPromise;
-    fetchTasks();
-    setTitle("");
-  } catch (err) {
-    console.error(err);
-  }
-};
-
-
-
-  // const handleDelete = async (id)=>{
-  //   try
-  //   {
-  //     await fetch(`${API_URL}${id}`,{
-  //       method: "DELETE",
-  //     });
-
-  //     fetchTasks();
-  //   }
-  //   catch (err){
-  //     console.error("failed to delete task", err);
-  //   }
-  // }
+    try {
+      await addPromise;
+      fetchTasks();
+      setTitle("");
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   const handleDelete = async (id) => {
-  if (deletingTaskId) return;
+    if (deletingTaskId.has(id)) return;
 
-  setDeletingTaskId(id);
-  const deletePromise = fetch(`${API_URL}${id}`, {
-    method: "DELETE",
-  });
+    setDeletingTaskId((prev) => {
+      const next = new Set(prev);
+      next.add(id);
+      return next;
+    });
 
+    const deletePromise = fetch(`${API_URL}${id}`, {
+      method: "DELETE",
+    });
 
-  toast.promise(deletePromise, {
-    loading: "Deleting task...",
-    success: "Task deleted",
-    error: "Failed to delete task",
+    toast.promise(deletePromise, {
+      loading: "Deleting task...",
+      success: "Task deleted",
+      error: "Failed to delete task",
   });
 
   try {
@@ -121,20 +109,33 @@ function App() {
     fetchTasks();
   } catch (err) {
     console.error(err);
-  }
-  finally{
-    setDeletingTaskId(null);
+  } finally {
+    setDeletingTaskId((prev) => {
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
   }
 };
 
 
+
   return (
     <>
+    <div>
+      <img src="Notes.png" alt="" className="absolute w-20  lg:inline hidden top-20 left-20 rotate-30 z-0" />
+      <img src="PAPER.png" alt="" className="absolute w-20  lg:inline hidden top-10 right-100 rotate-30 z-0" />
+    </div>
     <Toaster position="bottom-right" />
-    <div className="min-h-screen w-full bg-white text-black flex flex-col items-center px-4 py-8">
+    <div className="min-h-screen w-full z-10 bg-[#F9FAFB] text-black flex flex-col items-center px-4 py-8"
+      style={{
+      backgroundImage: "radial-gradient(#cbd5e1 1px, transparent 1px)",
+      backgroundSize: "20px 20px",
+    }}
+    >
       {/* Header */}
       <div className="mb-10 text-center max-w-xl">
-        <h1 className="text-4xl md:text-6xl font-bold mb-3">
+        <h1 className=" z-10 text-4xl md:text-6xl font-bold mb-3">
           Task Manager
         </h1>
         <h2 className="text-sm md:text-lg font-light opacity-70">
@@ -143,7 +144,7 @@ function App() {
       </div>
 
       {/* Input box */}
-      <div className="border border-gray-300 p-5 rounded-xl shadow-lg w-full max-w-xl">
+      <div className="border border-gray-300 p-5 rounded-xl shadow-lg bg-[#F9FAFB] w-full max-w-xl">
         <form onSubmit={handleSubmit} className="flex gap-3 w-full">
           <input
             type="text"
@@ -172,12 +173,18 @@ function App() {
       </div>
 
       {/* Task list */}
-      <div className="mt-10 w-full max-w-4xl flex-1 border border-dashed rounded-lg shadow-xl border-gray-200 p-2 md:p-12 overflow-y-auto">
+      <div className="mt-10 w-full max-w-4xl bg-[#FCF8BA] flex-1 border border-dashed rounded-lg shadow-xl border-gray-200 p-2 md:p-12 overflow-y-auto"
+      style={{
+        backgroundImage:
+          "linear-gradient(to bottom, rgba(0,0,0,0.04) 1px, transparent 1px)",
+        backgroundSize: "100% 32px",
+      }}
+      >
         <ul className="space-y-3">
           {tasks.length === 0 ? (
             <div className="flex flex-col items-center justify-center mt-16 opacity-70">
               <div className="w-10 h-10 mb-2 bg-black rounded-full flex items-center justify-center">
-                <div className="h-6 w-6 bg-white rounded-full"></div>
+                <div className="h-6 w-6 bg-[#FCF8BA] rounded-full"></div>
               </div>
               <p className="text-sm tracking-wide">NO TASKS ADDED YET</p>
             </div>
@@ -185,7 +192,7 @@ function App() {
             tasks.map((task) => (
               <li
                 key={task._id}
-                className="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 shadow-sm"
+                className="flex items-center opacity-70 justify-between bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 shadow-sm"
               >
                 <span
                   onClick={() =>
@@ -207,11 +214,11 @@ function App() {
 
                 {/* Delete button */}
                 <button
-                  disabled={deletingTaskId === task._id}
+                  disabled={deletingTaskId.has(task._id)}
                   onClick={() => handleDelete(task._id)}
                   className="text-red-500 text-sm font-medium hover:text-red-700 transition cursor-pointer"
                 >
-                  {deletingTaskId === task._id ? "Deleting..." : "Delete"}
+                  {deletingTaskId.has(task._id)? "Deleting..." : "Delete"}
                 </button>
               </li>
             ))
