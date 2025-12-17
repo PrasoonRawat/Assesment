@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-
+import {Toaster, toast} from "react-hot-toast" 
 
 
 const API_URL = "https://assesment-iqkx.onrender.com/tasks/";
@@ -9,6 +9,7 @@ function App() {
   const [title, setTitle] = useState("");
   const [tasks, setTasks] = useState([]);
   const [expandedTaskId, setExpandedTaskId] = useState(null);
+  const [deletingTaskId, setDeletingTaskId] = useState(null);
 
   useEffect(() => {
     fetchTasks();
@@ -33,49 +34,103 @@ function App() {
 };
 
 
+  // const handleSubmit = async (e) => {
+  //   e.preventDefault();
+
+  //   if(!title.trim()) return;
+
+
+  //   try {
+  //     await fetch(API_URL, {
+  //       method: "POST",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //       },
+  //       body: JSON.stringify({title}),
+  //     });
+
+  //     fetchTasks();
+  //     setTitle("");
+  //   }
+
+  //   catch(err){
+  //     console.error("failed to create task", err);
+  //   }
+  //   console.log("Task title:", title);
+  //   setTitle("");
+  // };
+
   const handleSubmit = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
+  if (!title.trim()) return;
 
-    if(!title.trim()) return;
+  const addPromise = fetch(API_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ title }),
+  });
 
+  toast.promise(addPromise, {
+    loading: "Adding task...",
+    success: "Task added successfully",
+    error: "Failed to add task",
+  });
 
-    try {
-      await fetch(API_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({title}),
-      });
-
-      fetchTasks();
-      setTitle("");
-    }
-
-    catch(err){
-      console.error("failed to create task", err);
-    }
-    console.log("Task title:", title);
+  try {
+    await addPromise;
+    fetchTasks();
     setTitle("");
-  };
-
-
-  const handleDelete = async (id)=>{
-    try
-    {
-      await fetch(`${API_URL}${id}`,{
-        method: "DELETE",
-      });
-
-      fetchTasks();
-    }
-    catch (err){
-      console.error("failed to delete task", err);
-    }
+  } catch (err) {
+    console.error(err);
   }
+};
+
+
+
+  // const handleDelete = async (id)=>{
+  //   try
+  //   {
+  //     await fetch(`${API_URL}${id}`,{
+  //       method: "DELETE",
+  //     });
+
+  //     fetchTasks();
+  //   }
+  //   catch (err){
+  //     console.error("failed to delete task", err);
+  //   }
+  // }
+
+  const handleDelete = async (id) => {
+  if (deletingTaskId) return;
+
+  setDeletingTaskId(id);
+  const deletePromise = fetch(`${API_URL}${id}`, {
+    method: "DELETE",
+  });
+
+
+  toast.promise(deletePromise, {
+    loading: "Deleting task...",
+    success: "Task deleted",
+    error: "Failed to delete task",
+  });
+
+  try {
+    await deletePromise;
+    fetchTasks();
+  } catch (err) {
+    console.error(err);
+  }
+  finally{
+    setDeletingTaskId(null);
+  }
+};
+
 
   return (
     <>
+    <Toaster position="bottom-right" />
     <div className="min-h-screen w-full bg-white text-black flex flex-col items-center px-4 py-8">
       {/* Header */}
       <div className="mb-10 text-center max-w-xl">
@@ -152,10 +207,11 @@ function App() {
 
                 {/* Delete button */}
                 <button
+                  disabled={deletingTaskId === task._id}
                   onClick={() => handleDelete(task._id)}
                   className="text-red-500 text-sm font-medium hover:text-red-700 transition cursor-pointer"
                 >
-                  Delete
+                  {deletingTaskId === task._id ? "Deleting..." : "Delete"}
                 </button>
               </li>
             ))
