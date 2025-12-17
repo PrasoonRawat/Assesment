@@ -9,8 +9,8 @@ This project was built as part of a technical assignment and focuses on **clean 
 
 ## 🚀 Live Links
 
-- **Frontend:** 
-- **Backend API:** 
+- **Frontend:** https://assesment-navy.vercel.app/
+- **Backend API:** https://assesment-iqkx.onrender.com
 
 ---
 

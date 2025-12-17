@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 
 
 
-const API_URL = "http://localhost:5000/tasks/";
+const API_URL = "https://assesment-iqkx.onrender.com/tasks/";
 
 
 function App() {
